@@ -34,9 +34,12 @@ input[type="text"],select {
     box-sizing: border-box;
     padding: 10px;
     border: 2px solid #ccc;
-    border-radius: 10px;
+    border-radius: 5px;
 }
 button {
+    display: block;
+    margin:  0 auto;
+
     padding: 10px 15px;
     background-color: #28a745;
     color: white;
@@ -44,9 +47,6 @@ button {
     border-radius: 4px;
     cursor: pointer;
     font-size: 16px;
-}
-button:hover{
-    background-color: #218838;
 }
 .alert {
     padding: 15px;
@@ -59,7 +59,10 @@ button:hover{
     border: 1px solid #c3e6cb;
 }
 a.btn-link {
-    display:  inline-block;
+    display: block;
+    margin: 15px auto 0;
+    width: max-content;
+
     margin-top: 15px;
     color: #007bff;
     text-decoration: none;
