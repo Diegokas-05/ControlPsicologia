@@ -1,4 +1,6 @@
 <?php
+// 1. Cargar las dependencias de Composer (OBLIGATORIO)
+require_once '../vendor/autoload.php';
 // requerimos el archivo de configuración de la base de datos
 require_once '../config/Database.php';
 
@@ -6,9 +8,9 @@ require_once '../config/Database.php';
 $db = new Database();
 
 // llamamos al método conectar() para obtener la conexión
-$conexion = $db->conectar();
+$baseDatos = $db->conectar();
 
-if ($conexion instanceof MongoDB\Driver\Manager) {
-    echo "<h1>Conexión exitosa a MongoDB</h1>";
+if ($baseDatos) {
+    echo "<h1>Entorno listo para el Avance 01</h1>";
     echo "<p style='color: green; '> conectado exitosamente a la base de datos</p>";
 }
