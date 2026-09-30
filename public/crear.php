@@ -1,3 +1,7 @@
+require_once '../app/Security/Sesion.php';
+require_once '../app/Security/Csrf.php';
+iniciar_sesion_segura();
+exigir_rol('admin');
 <!DOCTYPE html>
 <html lang="es">
 <head>

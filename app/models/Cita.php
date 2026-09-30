@@ -46,5 +46,51 @@ class Cita {
         
         // Ejecutamos la consulta find() requerida en la rúbrica
         return $this->coleccion->find($criterios);
+
+    }
+
+    // Método para eliminar una cita (Requisito R04)
+    public function eliminar($id) {
+        try {
+            // MongoDB requiere que los IDs de texto se conviertan a su formato especial ObjectId
+            $idMongo = new MongoDB\BSON\ObjectId($id);
+            $resultado = $this->coleccion->deleteOne(['_id' => $idMongo]);
+            
+            return $resultado->getDeletedCount() > 0;
+            
+        } catch (Exception $e) {
+            return false;
+        }
+
+    }
+
+    
+    // Método para obtener una cita específica por su ID
+    public function obtenerPorId($id) {
+        $idMongo = new MongoDB\BSON\ObjectId($id);
+        return $this->coleccion->findOne(['_id' => $idMongo]);
+    }
+
+    // Método para actualizar una cita (Requisito R03)
+    public function actualizar($id, $datos) {
+        try {
+            $idMongo = new MongoDB\BSON\ObjectId($id);
+            
+            // $set le indica a MongoDB que solo reemplace los campos especificados, conservando el _id
+            $resultado = $this->coleccion->updateOne(
+                ['_id' => $idMongo],
+                ['$set' => [
+                    'motivo' => $datos['motivo'],
+                    'tipo' => $datos['tipo'],
+                    'estado' => $datos['estado']
+                ]]
+            );
+            
+            // Retornamos true incluso si el usuario guarda sin hacer cambios
+            return true;
+            
+        } catch (Exception $e) {
+            return false;
+        }
     }
 }
