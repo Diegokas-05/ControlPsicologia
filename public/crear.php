@@ -1,7 +1,10 @@
+<?php
 require_once '../app/Security/Sesion.php';
 require_once '../app/Security/Csrf.php';
 iniciar_sesion_segura();
 exigir_rol('admin');
+?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -13,7 +16,15 @@ exigir_rol('admin');
     <div class="container">
         <h1>Registrar Nueva Cita</h1>
 
+        <!-- Alertas dinámicas si hay errores de validación -->
+        <?php if (isset($_GET['error'])): ?>
+            <div class="alert alert-danger"><?= htmlspecialchars($_GET['error']) ?></div>
+        <?php endif; ?>
+
         <form action="guardar.php" method="POST">
+            <!-- TOKEN DE SEGURIDAD OBLIGATORIO -->
+            <?= campo_csrf() ?>
+
             <div class="form-group">
                 <label for="motivo">Motivo de la Consulta:</label>
                 <input type="text" id="motivo" name="motivo" required maxlength="100" placeholder="Ej. Estres Laboral">
@@ -37,7 +48,10 @@ exigir_rol('admin');
                 </select>
             </div>
 
-            <button type="submit">Guardar Cita</button>
+            <div style="margin-top: 20px;">
+                <button type="submit">Guardar Cita</button>
+                <a href="mvc.php" class="btn-link" style="margin-left: 15px;">Volver al listado</a>
+            </div>
         </form>
     </div>
 </body>

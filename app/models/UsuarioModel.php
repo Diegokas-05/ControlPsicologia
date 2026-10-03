@@ -3,12 +3,9 @@ declare(strict_types=1);
 
 final class UsuarioModel
 {
-    private MongoDB\Collection $coleccion;
-
-    public function __construct(MongoDB\Collection $coleccion)
-    {
-        $this->coleccion = $coleccion;
-    }
+    public function __construct(
+        private MongoDB\Collection $coleccion
+    ) {}
 
     public function buscarActivoPorCorreo(string $correo): ?object
     {

@@ -18,8 +18,8 @@ $usuarios->createIndex(
 
 // Cuentas ficticias exigidas por la rúbrica
 $cuentas = [
-    ['Administrador Psicología', 'admin@psicologia.test', 'Admin-2026!', 'admin'],
-    ['Asistente Consulta', 'consulta@psicologia.test', 'Consulta-2026!', 'consulta'],
+    ['Administrador Psicología', 'admin@psicologia.test', 'Admin2026', 'admin'],
+    ['Asistente Consulta', 'consulta@psicologia.test', 'Hola1234', 'consulta'],
 ];
 
 foreach ($cuentas as [$nombre, $correo, $clave, $rol]) {

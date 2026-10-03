@@ -11,6 +11,7 @@ require_once $raiz.'/app/Controllers/AuthController.php';
 
 iniciar_sesion_segura();
 
+// Conectar a MongoDB
 $db = new Database();
 $baseDatos = $db->conectar();
 $usuarios = $baseDatos->usuarios;
@@ -18,6 +19,7 @@ $usuarios = $baseDatos->usuarios;
 $controlador = new AuthController(new UsuarioModel($usuarios));
 $metodo = $_SERVER['REQUEST_METHOD'] ?? '';
 
+// Si entra normal (GET), mostrar formulario o redirigir si ya ingresó
 if ($metodo === 'GET') {
     if (usuario_actual() !== null) {
         header('Location: mvc.php', true, 303);
@@ -27,6 +29,7 @@ if ($metodo === 'GET') {
     exit;
 }
 
+// Si envía el formulario (POST), procesar datos
 if ($metodo === 'POST') {
     $controlador->ingresar();
     exit;

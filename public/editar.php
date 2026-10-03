@@ -1,6 +1,10 @@
 <?php
 require_once '../vendor/autoload.php';
 require_once '../app/models/Cita.php';
+require_once '../app/Security/Sesion.php';
+require_once '../app/Security/Csrf.php';
+iniciar_sesion_segura();
+exigir_rol('admin');
 
 $id = $_GET['id'] ?? '';
 

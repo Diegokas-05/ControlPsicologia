@@ -1,50 +1,45 @@
 <?php
-
 require_once '../vendor/autoload.php';
 require_once '../app/models/Cita.php';
+require_once '../app/Security/Sesion.php';
+require_once '../app/Security/Csrf.php';
 
-// Requisito p09: rechazar peticiones get
-if ($_SERVER['REQUEST_METHOD'] !== 'POST'){
-    die("
-        <link rel='stylesheet' href='assets/css/estilos.css'>
-        <div class='container'>
-            <div class='alert alert-danger'>Error: La aplicacion rechazada la peticion GET. Usa el formulario.</div>
-            <a href='crear.php' class='btn-link'>Volver al formulario</a>
-        </div>
-    ");
+// Controles de seguridad de la Guía 06
+iniciar_sesion_segura();
+exigir_rol('admin');
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    header('Allow: POST');
+    http_response_code(405);
+    exit;
 }
 
-# capturar  y limpia los datos 
+validar_csrf();
+
+# Capturar y limpiar los datos 
 $motivo = trim($_POST['motivo'] ?? '');
 $tipo = trim($_POST['tipo'] ?? '');
 $estado = trim($_POST['estado'] ?? '');
 
-//funcion auxiliar para mostrar errores sin romper el diseño
-function mostrarError($mensaje) {
-    die("
-        <link rel='stylesheet' href='assets/css/estilos.css'>
-        <div class='container'>
-            <div class='alert alert-danger'>Fallo de validacion: $mensaje</div>
-            <a href='crear.php' class='btn-link'> Volver al formularion</a>
-        </div>
-    ");
+// Validar y redirigir con error si algo falla
+if (empty($motivo) || strlen($motivo) > 100) {
+    header('Location: crear.php?error=El motivo es obligatorio y máximo de 100 caracteres.');
+    exit;
 }
 
-// validar obligatorio sea mayor a 100 la longitud
-if (empty($motivo) || strlen($motivo) > 100) {
-    mostrarError("El motivo es obligatorio y máximo de 100 caracteres. ");  
-}
-// validar que los valores pertenezcan a las listas permitidas
 $tiposPermitidos = ['Individual', 'Pareja', 'Infantil'];
 if (!in_array($tipo, $tiposPermitidos)){
-    mostrarError("Tipo de terapia no permitida.");
+    header('Location: crear.php?error=Tipo de terapia no permitida.');
+    exit;
 }
 
 $estadosPermitidos = ['Pendiente', 'Completada', 'Cancelada'];
 if (!in_array($estado, $estadosPermitidos)){
-    mostrarError("Estado no permitido.");
+    header('Location: crear.php?error=Estado no permitido.');
+    exit;
 }
 
+// Guardar en la base de datos
 $citaModel = new Cita();
 $datosFormulario = [
     'motivo' => $motivo,
@@ -52,22 +47,14 @@ $datosFormulario = [
     'estado' => $estado
 ];
 
-?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>ControlPsicologico</title>
-    <link rel="stylesheet" href="assets/css/estilos.css">
-</head>
-<body>
-    <div class="container">
-        <?php if ($citaModel->crear($datosFormulario)): ?>
-            <div class="alert alert-success"> Registro guardado exitosamente.</div>
-        <?php else: ?>
-            <div class="alert alert-danger"> Error al guardar en la base de datos.</div>
-        <?php endif; ?>
-        <a href="crear.php" class="btn-link">Registrar otra cita</a>
-    </div>
-</body>
-</html>
+if ($citaModel->crear($datosFormulario)) {
+    // 1. Guardamos el mensaje temporal en la sesión
+    $_SESSION['mensaje_exito'] = "La cita fue registrada exitosamente.";
+    
+    // 2. Redirigimos al listado
+    header('Location: mvc.php', true, 303);
+    exit;
+} else {
+    header('Location: crear.php?error=Error al guardar en la base de datos.');
+    exit;
+}
