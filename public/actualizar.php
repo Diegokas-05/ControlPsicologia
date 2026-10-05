@@ -1,23 +1,35 @@
 <?php
+declare(strict_types=1);
+
 require_once '../vendor/autoload.php';
 require_once '../app/models/Cita.php';
+require_once '../app/Security/Sesion.php';
+require_once '../app/Security/Csrf.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: index.php');
-    exit;
+iniciar_sesion_segura();
+exigir_rol('admin');
+
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+    header('Allow: POST');
+    http_response_code(405);
+    exit('Método no permitido.');
 }
 
-$id = trim($_POST['id'] ?? '');
+validar_csrf();
+
+$id     = trim($_POST['id'] ?? '');
 $motivo = trim($_POST['motivo'] ?? '');
-$tipo = trim($_POST['tipo'] ?? '');
+$tipo   = trim($_POST['tipo'] ?? '');
 $estado = trim($_POST['estado'] ?? '');
 
-function mostrarError($mensaje, $id) {
+function mostrarError(string $mensaje, string $id): void {
+    $idSeguro = htmlspecialchars($id, ENT_QUOTES, 'UTF-8');
+    $msgSeguro = htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8');
     die("
         <link rel='stylesheet' href='assets/css/estilos.css'>
         <div class='container'>
-            <div class='alert alert-danger'>Fallo de validación: $mensaje</div>
-            <a href='editar.php?id=$id' class='btn-link'>Volver al formulario</a>
+            <div class='alert alert-danger'>Fallo de validación: {$msgSeguro}</div>
+            <a href='editar.php?id={$idSeguro}' class='btn-link'>Volver al formulario</a>
         </div>
     ");
 }
@@ -27,38 +39,26 @@ if (empty($id) || empty($motivo) || strlen($motivo) > 100) {
 }
 
 $tiposPermitidos = ['Individual', 'Pareja', 'Infantil'];
-if (!in_array($tipo, $tiposPermitidos)) {
+if (!in_array($tipo, $tiposPermitidos, true)) {
     mostrarError("Tipo de terapia no permitido.", $id);
 }
 
 $estadosPermitidos = ['Pendiente', 'Completada', 'Cancelada'];
-if (!in_array($estado, $estadosPermitidos)) {
+if (!in_array($estado, $estadosPermitidos, true)) {
     mostrarError("Estado no permitido.", $id);
 }
 
 $citaModel = new Cita();
 $datosFormulario = [
     'motivo' => $motivo,
-    'tipo' => $tipo,
-    'estado' => $estado
+    'tipo'   => $tipo,
+    'estado' => $estado,
 ];
 
-?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Actualización - ControlPsicologia</title>
-    <link rel="stylesheet" href="assets/css/estilos.css">
-</head>
-<body>
-    <div class="container">
-        <?php if ($citaModel->actualizar($id, $datosFormulario)): ?>
-            <div class="alert alert-success">Registro actualizado exitosamente.</div>
-        <?php else: ?>
-            <div class="alert alert-danger">Error al actualizar en la base de datos.</div>
-        <?php endif; ?>
-        <a href="index.php" class="btn-link">Volver al listado</a>
-    </div>
-</body>
-</html>
+if ($citaModel->actualizar($id, $datosFormulario)) {
+    $_SESSION['mensaje_exito'] = "La cita fue actualizada exitosamente.";
+    header('Location: mvc.php', true, 303);
+    exit;
+}
+
+mostrarError("Error al actualizar en la base de datos.", $id);

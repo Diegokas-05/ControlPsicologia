@@ -1,10 +1,18 @@
 <?php
+declare(strict_types=1);
+
 require_once '../app/Security/Sesion.php';
 require_once '../app/Security/Csrf.php';
+
 iniciar_sesion_segura();
 exigir_rol('admin');
-?>
 
+if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
+    header('Allow: GET');
+    http_response_code(405);
+    exit('Método no permitido.');
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -16,18 +24,18 @@ exigir_rol('admin');
     <div class="container">
         <h1>Registrar Nueva Cita</h1>
 
-        <!-- Alertas dinámicas si hay errores de validación -->
         <?php if (isset($_GET['error'])): ?>
-            <div class="alert alert-danger"><?= htmlspecialchars($_GET['error']) ?></div>
+            <div class="alert alert-danger">
+                <?= htmlspecialchars((string)$_GET['error'], ENT_QUOTES, 'UTF-8') ?>
+            </div>
         <?php endif; ?>
 
         <form action="guardar.php" method="POST">
-            <!-- TOKEN DE SEGURIDAD OBLIGATORIO -->
             <?= campo_csrf() ?>
 
             <div class="form-group">
                 <label for="motivo">Motivo de la Consulta:</label>
-                <input type="text" id="motivo" name="motivo" required maxlength="100" placeholder="Ej. Estres Laboral">
+                <input type="text" id="motivo" name="motivo" required maxlength="100" placeholder="Ej. Estrés Laboral">
             </div>
 
             <div class="form-group">

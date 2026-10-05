@@ -7,19 +7,23 @@ require_once $raiz.'/config/Database.php';
 require_once $raiz.'/app/Security/Sesion.php';
 require_once $raiz.'/app/Security/Csrf.php';
 require_once $raiz.'/app/Models/UsuarioModel.php';
+require_once $raiz.'/app/Models/BitacoraModel.php';   // ← NUEVO
 require_once $raiz.'/app/Controllers/AuthController.php';
 
 iniciar_sesion_segura();
 
-// Conectar a MongoDB
-$db = new Database();
+$db        = new Database();
 $baseDatos = $db->conectar();
-$usuarios = $baseDatos->usuarios;
+$usuarios  = $baseDatos->usuarios;
+$bitacora  = $baseDatos->bitacora;   // ← NUEVO
 
-$controlador = new AuthController(new UsuarioModel($usuarios));
+$controlador = new AuthController(
+    new UsuarioModel($usuarios),
+    new BitacoraModel($bitacora)     // ← NUEVO
+);
+
 $metodo = $_SERVER['REQUEST_METHOD'] ?? '';
 
-// Si entra normal (GET), mostrar formulario o redirigir si ya ingresó
 if ($metodo === 'GET') {
     if (usuario_actual() !== null) {
         header('Location: mvc.php', true, 303);
@@ -29,7 +33,6 @@ if ($metodo === 'GET') {
     exit;
 }
 
-// Si envía el formulario (POST), procesar datos
 if ($metodo === 'POST') {
     $controlador->ingresar();
     exit;

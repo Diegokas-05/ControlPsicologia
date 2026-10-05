@@ -1,4 +1,6 @@
 <?php
+
+
 declare(strict_types=1);
 
 // 1. Filtro de seguridad del método

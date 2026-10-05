@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Ingresar - ControlPsicologia</title>
-    <link rel="stylesheet" href="../css/estilos.css">
+    <link rel="stylesheet" href="assets/css/estilos.css">
     <style>
         .acceso { min-height: 85vh; display: grid; place-items: center; font-family: sans-serif; }
         .acceso .tarjeta { width: min(100%, 430px); background: #f8f9fa; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
