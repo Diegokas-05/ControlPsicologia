@@ -10,7 +10,7 @@ require_once $raiz . '/app/Security/Sesion.php';
 require_once $raiz . '/app/Security/Csrf.php';
 
 iniciar_sesion_segura();
-exigir_rol('admin');
+exigir_rol('admin', 'consulta');
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
     header('Allow: GET');

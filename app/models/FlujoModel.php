@@ -38,10 +38,21 @@ final class FlujoModel
         [$desde, $hacia] = $pasos[$accion];
         $fecha = new MongoDB\BSON\UTCDateTime();
 
+        $mapeoEstado = [
+            'pendiente'  => 'Pendiente',
+            'en_proceso' => 'En proceso',
+            'finalizado' => 'Finalizado',
+        ];
+        $nuevoEstado = $mapeoEstado[$hacia] ?? $hacia;
+
         $resultado = $this->coleccion->updateOne(
             $this->filtro($base, ['_id' => $id, 'estado_flujo' => $desde]),
             [
-                '$set'  => ['estado_flujo' => $hacia, 'actualizado_en' => $fecha],
+                '$set'  => [
+                    'estado_flujo'   => $hacia,
+                    'estado'         => $nuevoEstado,
+                    'actualizado_en' => $fecha,
+                ],
                 '$push' => ['historial_flujo' => [
                     'desde'    => $desde,
                     'hacia'    => $hacia,
@@ -65,5 +76,22 @@ final class FlujoModel
         }
 
         throw new DomainException('El estado cambio. Actualiza la bandeja.');
+    }
+
+    public function obtenerComprobante(MongoDB\BSON\ObjectId $id, array $base): object
+    {
+        $item = $this->coleccion->findOne(
+            $this->filtro($base, ['_id' => $id])
+        );
+
+        if ($item === null) {
+            throw new OutOfBoundsException('Registro no disponible.');
+        }
+
+        if (($item->estado_flujo ?? '') !== 'finalizado') {
+            throw new DomainException('El trabajo no esta finalizado.');
+        }
+
+        return $item;
     }
 }

@@ -6,7 +6,7 @@ require_once $raiz . '/app/Security/Sesion.php';
 require_once $raiz . '/app/Security/Csrf.php';
 
 iniciar_sesion_segura();
-exigir_rol('admin');
+exigir_rol('admin', 'consulta');
 
 header('Content-Type: text/html; charset=utf-8');
 header('Cache-Control: no-store');
@@ -16,16 +16,15 @@ function crear_controlador_flujo(): FlujoController
     global $auditoria;
     $raiz = dirname(__DIR__, 2);
     
-    // --- LÍNEA NUEVA: Cargar librerías de MongoDB a través de Composer ---
+    // Cargar librerías de MongoDB a través de Composer
     require_once $raiz . '/vendor/autoload.php';
-    // ----------------------------------------------------------------------
 
-    // --- ADAPTACIÓN A TU PROYECTO: Conexión a BD ---
+    // Conexión a BD
     require_once $raiz . '/config/Database.php';
     $db = new Database();
     $baseDatos = $db->conectar();
-    $coleccion = $baseDatos->citas; // Apuntamos a tu colección de citas
-    // -----------------------------------------------
+    $coleccion = $baseDatos->citas;
+    $auditoria = $baseDatos->bitacora;
 
     require_once $raiz . '/funciones.php';
     require_once $raiz . '/app/Security/Entrada.php';
@@ -33,7 +32,18 @@ function crear_controlador_flujo(): FlujoController
     require_once $raiz . '/app/Models/FlujoModel.php';
     require_once $raiz . '/app/Controllers/FlujoController.php';
 
-    $filtroBase = []; 
+    $usuario = usuario_actual();
+    $filtroBase = [];
+    if (($usuario['rol'] ?? '') === 'consulta') {
+        $nombrePsicologo = (string)($usuario['nombre'] ?? '');
+        $idPsicologo = (string)($usuario['id'] ?? '');
+        $filtroBase = [
+            '$or' => [
+                ['psicologo' => $nombrePsicologo],
+                ['psicologo' => $idPsicologo],
+            ]
+        ];
+    }
     return new FlujoController(new FlujoModel($coleccion), $filtroBase);
 }
 
@@ -42,7 +52,7 @@ function ejecutar_flujo(callable $tarea): void
     try {
         $tarea();
     } catch (InvalidArgumentException $error) {
-        registrar_rechazo_entrada_guia07('flujo'); // Lo descomentamos
+        registrar_rechazo_entrada_guia07('flujo');
         http_response_code(422);
         echo '<p role="alert">Datos invalidos. Revisa la solicitud.</p>';
     } catch (OutOfBoundsException $error) {

@@ -44,7 +44,7 @@ try {
 
 } catch (InvalidArgumentException $e) {
     registrar_rechazo_entrada_guia07('crear');
-    $_SESSION['error_crear'] = 'Datos no válidos: verifica que el motivo tenga entre 1 y 100 caracteres y que las opciones sean correctas.';
+    $_SESSION['error_crear'] = $e->getMessage() ?: 'Datos no válidos: verifica que el motivo tenga entre 5 y 100 caracteres y que la fecha no esté en el pasado.';
     header('Location: crear.php', true, 303);
     exit;
 } catch (Throwable $e) {

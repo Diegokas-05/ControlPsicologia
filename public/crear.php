@@ -2,10 +2,13 @@
 declare(strict_types=1);
 
 $raiz = dirname(__DIR__);
+require_once $raiz . '/vendor/autoload.php';
+require_once $raiz . '/config/Database.php';
 require_once $raiz . '/funciones.php';
 require_once $raiz . '/app/Security/Sesion.php';
 require_once $raiz . '/app/Security/Csrf.php';
 require_once $raiz . '/app/Security/Entrada.php';
+require_once $raiz . '/app/Models/UsuarioModel.php';
 
 iniciar_sesion_segura();
 exigir_rol('admin');
@@ -15,6 +18,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
     http_response_code(405);
     exit('Método no permitido.');
 }
+
+$db = new Database();
+$baseDatos = $db->conectar();
+$usuarioModel = new UsuarioModel($baseDatos->usuarios);
+$psicologosActivos = $usuarioModel->listarPsicologosActivos();
 
 $error = $_SESSION['error_crear'] ?? ($_GET['error'] ?? null);
 unset($_SESSION['error_crear']);
@@ -63,10 +71,12 @@ unset($_SESSION['error_crear']);
 
                         <div class="form-group">
                             <label for="motivo">Paciente / Motivo Clínico <span class="campo-obligatorio">*</span></label>
-                            <input type="text" id="motivo" name="motivo" required maxlength="100"
+                            <input type="text" id="motivo" name="motivo" required minlength="5" maxlength="100"
+                                   pattern="^(?!\d+$).{5,100}$"
+                                   title="El motivo o paciente debe tener al menos 5 caracteres y no puede ser sólo números."
                                    placeholder="Ej. Carlos Mendoza — Evaluación de estrés y ansiedad"
                                    autocomplete="off">
-                            <small class="form-ayuda">Máximo 100 caracteres obligatorios.</small>
+                            <small class="form-ayuda">Mínimo 5 caracteres. No se permiten nombres exclusivamente numéricos.</small>
                         </div>
 
                         <div class="form-group">
@@ -97,18 +107,26 @@ unset($_SESSION['error_crear']);
 
                         <div class="form-group">
                             <label for="fecha_cita">Fecha y Hora Programada</label>
-                            <input type="datetime-local" id="fecha_cita" name="fecha_cita">
-                            <small class="form-ayuda">Opcional: se puede coordinar posteriormente.</small>
+                            <input type="datetime-local" id="fecha_cita" name="fecha_cita"
+                                   min="<?= date('Y-m-d\TH:i') ?>">
+                            <small class="form-ayuda">Restringido a fecha y hora presente o futura.</small>
                         </div>
 
                         <div class="form-group">
                             <label for="psicologo">Psicólogo Asignado</label>
                             <select id="psicologo" name="psicologo">
-                                <option value="Lic. Roberto Méndez">Lic. Roberto Méndez (Cognitivo-Conductual)</option>
-                                <option value="Dra. Elena Ramos">Dra. Elena Ramos (Psicología Clínica / Infantil)</option>
-                                <option value="Lic. Sofía Martínez">Lic. Sofía Martínez (Terapia de Pareja y Familia)</option>
                                 <option value="Por Asignar">Por Asignar en Recepción</option>
+                                <?php foreach ($psicologosActivos as $p): ?>
+                                    <?php 
+                                        $nombreP = (string)($p->nombre ?? '');
+                                        $espP = (string)($p->especialidad ?? '');
+                                    ?>
+                                    <option value="<?= e($nombreP) ?>">
+                                        <?= e($nombreP) ?><?= $espP !== '' ? ' (' . e($espP) . ')' : '' ?>
+                                    </option>
+                                <?php endforeach; ?>
                             </select>
+                            <small class="form-ayuda">Psicólogos activos disponibles en el sistema.</small>
                         </div>
 
                         <div class="form-group">

@@ -26,9 +26,21 @@
                     $motivo = is_object($item) ? ($item->motivo ?? '') : ($item['motivo'] ?? '');
                     $tipo = is_object($item) ? ($item->tipo ?? '') : ($item['tipo'] ?? '');
                     $estado = is_object($item) ? ($item->estado ?? '') : ($item['estado'] ?? '');
+                    $estadoFlujo = is_object($item) ? ($item->estado_flujo ?? '') : ($item['estado_flujo'] ?? '');
+
+                    // Sincronización automática de estado clínico con el flujo operativo
+                    if ($estadoFlujo === 'finalizado' || $estado === 'Finalizado' || $estado === 'Completada') {
+                        $estadoTexto = 'Finalizado';
+                        $slugEstado = 'finalizado';
+                    } elseif ($estadoFlujo === 'en_proceso' || $estado === 'En proceso') {
+                        $estadoTexto = 'En proceso';
+                        $slugEstado = 'en-proceso';
+                    } else {
+                        $estadoTexto = $estado !== '' ? $estado : 'Pendiente';
+                        $slugEstado = strtolower(preg_replace('/[^a-z0-9]+/i', '-', (string)$estadoTexto));
+                    }
 
                     $slugTipo = strtolower(preg_replace('/[^a-z0-9]+/i', '-', (string)$tipo));
-                    $slugEstado = strtolower(preg_replace('/[^a-z0-9]+/i', '-', (string)$estado));
                 ?>
                 <tr>
                     <td>
@@ -41,7 +53,7 @@
                     </td>
                     <td>
                         <span class="badge badge-estado-<?= e($slugEstado) ?>">
-                            <?= e($estado) ?>
+                            <?= e($estadoTexto) ?>
                         </span>
                     </td>
                     <td style="text-align: center;">
@@ -53,9 +65,15 @@
                     <?php if (tiene_rol('admin')): ?>
                         <td>
                             <div class="acciones-fila">
-                                <a href="editar.php?id=<?= e($id) ?>" class="btn btn-sm btn-editar" title="Modificar datos de la cita">
-                                    Editar
-                                </a>
+                                <?php if ($estadoFlujo !== 'finalizado'): ?>
+                                    <a href="editar.php?id=<?= e($id) ?>" class="btn btn-sm btn-editar" title="Modificar datos de la cita">
+                                        Editar
+                                    </a>
+                                <?php else: ?>
+                                    <span class="btn btn-sm btn-editar btn-disabled" title="Cita finalizada — no editable" aria-disabled="true">
+                                        🔒 Bloqueado
+                                    </span>
+                                <?php endif; ?>
 
                                 <button type="button" class="btn btn-sm btn-danger"
                                         onclick="confirmarEliminar('<?= e($id) ?>', '<?= e(addslashes($motivo)) ?>')"

@@ -5,7 +5,7 @@ $raiz = dirname(__DIR__);
 require_once $raiz . '/app/Security/Sesion.php';
 
 iniciar_sesion_segura();
-exigir_rol('admin');
+exigir_rol('admin', 'consulta');
 
 if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
     header('Allow: GET');
@@ -17,9 +17,7 @@ header('Content-Type: text/html; charset=utf-8');
 header('Cache-Control: no-store');
 
 try {
-    // ESTA ES LA LÍNEA QUE ARREGLA EL ERROR DE MONGODB
     require_once $raiz . '/vendor/autoload.php'; 
-    
     require_once $raiz . '/config/Database.php';
     require_once $raiz . '/funciones.php';
     require_once $raiz . '/app/Security/Entrada.php'; 
@@ -28,14 +26,26 @@ try {
     require_once $raiz . '/app/Controllers/IndicadoresController.php';
 
     $db = new Database();
-    $coleccion = $db->conectar(); // Conecta a la base de datos
+    $coleccion = $db->conectar();
 
     $controlador = new IndicadoresController(
-        new IndicadoresModel($coleccion->citas), // Pasa tu colección de citas
+        new IndicadoresModel($coleccion->citas),
         new ResumenGo()
     );
 
-    $filtroBase = []; 
+    $usuario = usuario_actual();
+    $filtroBase = [];
+    if (($usuario['rol'] ?? '') === 'consulta') {
+        $nombrePsicologo = (string)($usuario['nombre'] ?? '');
+        $idPsicologo = (string)($usuario['id'] ?? '');
+        $filtroBase = [
+            '$or' => [
+                ['psicologo' => $nombrePsicologo],
+                ['psicologo' => $idPsicologo],
+            ]
+        ];
+    }
+
     $controlador->mostrar($filtroBase);
 
 } catch (Throwable $error) {

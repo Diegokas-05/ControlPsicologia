@@ -41,6 +41,14 @@
                 <?php else: ?>
                     <span class="texto-finalizado">&#10003; Proceso concluido</span>
                 <?php endif; ?>
+
+                <?php if (($item->estado_flujo ?? '') === 'finalizado'): ?>
+                    <p style="margin: 6px 0 0;">
+                        <a href="comprobante.php?id=<?= e((string)$item->_id) ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline">
+                            &#128196; Ver constancia de cierre
+                        </a>
+                    </p>
+                <?php endif; ?>
             </div>
 
             <details class="item-flujo-historial">

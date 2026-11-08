@@ -72,14 +72,15 @@ class Cita {
         }
     }
 
-    public function actualizar(string $id, array $datos): bool {
+    public function actualizar(string $id, array $datos, array $cambios = []): bool {
         try {
             $idMongo = new MongoDB\BSON\ObjectId($id);
+            $fecha = new MongoDB\BSON\UTCDateTime();
             $set = [
                 'motivo'         => $datos['motivo'],
                 'tipo'           => $datos['tipo'],
                 'estado'         => $datos['estado'],
-                'actualizado_en' => new MongoDB\BSON\UTCDateTime()
+                'actualizado_en' => $fecha
             ];
 
             if (isset($datos['fecha_cita'])) {
@@ -92,12 +93,26 @@ class Cita {
                 $set['notas'] = (string)$datos['notas'];
             }
 
+            $operacion = ['$set' => $set];
+
+            if (!empty($cambios)) {
+                $cambiosFormateados = [];
+                foreach ($cambios as $c) {
+                    $c['fecha'] = $fecha;
+                    $cambiosFormateados[] = $c;
+                }
+                $operacion['$push'] = [
+                    'historial_cambios' => ['$each' => $cambiosFormateados]
+                ];
+            }
+
             $this->coleccion->updateOne(
                 ['_id' => $idMongo],
-                ['$set' => $set]
+                $operacion
             );
             return true;
         } catch (Exception $e) {
+            error_log('Error al actualizar cita: ' . $e->getMessage());
             return false;
         }
     }

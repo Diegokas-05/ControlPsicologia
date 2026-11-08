@@ -33,6 +33,14 @@
             <?php unset($_SESSION['mensaje_exito']); ?>
         <?php endif; ?>
 
+        <?php if (isset($_SESSION['mensaje_info'])): ?>
+            <div class="alert alert-info" role="status">
+                <span>&#8505;</span>
+                <span><?= e($_SESSION['mensaje_info']) ?></span>
+            </div>
+            <?php unset($_SESSION['mensaje_info']); ?>
+        <?php endif; ?>
+
         <!-- 2. Buscador Avanzado y Barra de Filtros -->
         <?php $rutaActual = basename((string)($_SERVER['SCRIPT_NAME'] ?? 'citas.php')); ?>
         <section class="card" aria-labelledby="titulo-filtros">

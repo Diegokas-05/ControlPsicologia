@@ -11,14 +11,21 @@ final class CitaModel {
 
     public function listar(array $filtro = [], string $busqueda = ''): array {
         if ($busqueda !== '') {
-            $filtro['motivo'] = new MongoDB\BSON\Regex(
-                preg_quote($busqueda),
-            );
+            $condicionBusqueda = [
+                'motivo' => new MongoDB\BSON\Regex(preg_quote($busqueda), 'i')
+            ];
+            if (isset($filtro['$and'])) {
+                $filtro['$and'][] = $condicionBusqueda;
+            } elseif ($filtro !== []) {
+                $filtro = ['$and' => [$filtro, $condicionBusqueda]];
+            } else {
+                $filtro = $condicionBusqueda;
+            }
         }
         
         return $this->coleccion->find(
             $filtro,
-            ['sort' => ['motivo' => 1, '_id' => 1]]
+            ['sort' => ['_id' => -1]]
         )->toArray();
     }
 }

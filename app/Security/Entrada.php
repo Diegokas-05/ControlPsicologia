@@ -48,7 +48,40 @@ function entrada_id(array $datos, string $campo = 'id'): MongoDB\BSON\ObjectId
     return new MongoDB\BSON\ObjectId($valor);
 }
 
-function datos_cita_guia07(array $post, bool $edicion): array
+function validar_motivo_clinico(string $valor): string
+{
+    $valor = trim($valor);
+    $longitud = mb_strlen($valor, 'UTF-8');
+    if ($longitud < 5 || $longitud > 100) {
+        throw new InvalidArgumentException('El motivo debe tener entre 5 y 100 caracteres.');
+    }
+    if (preg_match('/^\d+$/', $valor)) {
+        throw new InvalidArgumentException('El motivo no puede ser únicamente numérico.');
+    }
+    if (!preg_match('/[\p{L}]{3,}/u', $valor)) {
+        throw new InvalidArgumentException('El motivo debe contener un nombre o descripción clínica válida (mínimo 3 letras).');
+    }
+    return $valor;
+}
+
+function validar_fecha_futura(?string $fecha): ?string
+{
+    if ($fecha === null || trim($fecha) === '') {
+        return null;
+    }
+    $fecha = trim($fecha);
+    $tiempo = strtotime($fecha);
+    if ($tiempo === false) {
+        throw new InvalidArgumentException('Formato de fecha u hora inválido.');
+    }
+    // Margen de 60 segundos de tolerancia por latencia en envío
+    if ($tiempo < (time() - 60)) {
+        throw new InvalidArgumentException('La fecha y hora de la cita no puede ser en el pasado.');
+    }
+    return $fecha;
+}
+
+function datos_cita_guia07(array $post, bool $edicion, ?string $fechaPrevia = null): array
 {
     $permitidos = [
         'motivo', 'tipo', 'estado', 'csrf',
@@ -59,15 +92,26 @@ function datos_cita_guia07(array $post, bool $edicion): array
     }
     entrada_campos($post, $permitidos);
 
+    $motivoTexto = entrada_texto($post, 'motivo', 1, 100);
+    $motivoValidado = validar_motivo_clinico($motivoTexto);
+
     $datos = [
-        'motivo' => entrada_texto($post, 'motivo', 1, 100),
+        'motivo' => $motivoValidado,
         'tipo'   => entrada_opcion($post, 'tipo', TIPOS_CITA),
         'estado' => entrada_opcion($post, 'estado', ESTADOS_CITA),
     ];
 
-    if (isset($post['fecha_cita']) && is_string($post['fecha_cita'])) {
-        $datos['fecha_cita'] = entrada_texto($post, 'fecha_cita', 0, 60);
+    if (isset($post['fecha_cita']) && is_string($post['fecha_cita']) && trim($post['fecha_cita']) !== '') {
+        $fechaEnviada = trim($post['fecha_cita']);
+        if ($edicion && $fechaPrevia !== null && $fechaEnviada === trim($fechaPrevia)) {
+            $datos['fecha_cita'] = $fechaEnviada;
+        } else {
+            $datos['fecha_cita'] = validar_fecha_futura($fechaEnviada);
+        }
+    } else {
+        $datos['fecha_cita'] = '';
     }
+
     if (isset($post['psicologo']) && is_string($post['psicologo'])) {
         $datos['psicologo'] = entrada_texto($post, 'psicologo', 0, 100);
     }

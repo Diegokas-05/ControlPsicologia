@@ -213,25 +213,28 @@ p {
 }
 
 .usuario-rol {
-    font-size: 0.68rem;
+    font-size: 0.72rem;
     font-weight: 800;
-    letter-spacing: 0.05em;
-    padding: 2px 8px;
+    letter-spacing: 0.06em;
+    padding: 3px 10px;
     border-radius: 999px;
     margin-top: 3px;
     display: inline-block;
+    text-transform: uppercase;
 }
 
 .usuario-rol-admin {
-    background: var(--primary-soft);
-    color: var(--primary);
-    border: 1px solid var(--primary-border);
+    background: #e0e7ff;
+    color: #3730a3;
+    border: 1px solid #a5b4fc;
+    box-shadow: 0 1px 2px rgba(55, 48, 163, 0.08);
 }
 
 .usuario-rol-consulta {
-    background: #f1f5f9;
-    color: #475569;
-    border: 1px solid var(--border-color);
+    background: #ccfbf1;
+    color: #0f766e;
+    border: 1px solid #5eead4;
+    box-shadow: 0 1px 2px rgba(15, 118, 110, 0.08);
 }
 
 .form-logout {
@@ -472,25 +475,51 @@ button,
 
 .badge-estado-pendiente,
 .badge-pendiente {
-    background: var(--estado-pendiente-bg);
-    border: 1px solid var(--estado-pendiente-border);
-    color: var(--estado-pendiente-text);
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    font-weight: 700;
 }
 
 .badge-estado-en_proceso,
 .badge-estado-en-proceso,
 .badge-en-proceso {
-    background: var(--estado-proceso-bg);
-    border: 1px solid var(--estado-proceso-border);
-    color: var(--estado-proceso-text);
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #b45309;
+    font-weight: 700;
 }
 
 .badge-estado-finalizado,
 .badge-estado-completada,
 .badge-finalizado {
-    background: var(--estado-finalizado-bg);
-    border: 1px solid var(--estado-finalizado-border);
-    color: var(--estado-finalizado-text);
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #047857;
+    font-weight: 700;
+    box-shadow: 0 1px 2px rgba(4, 120, 87, 0.08);
+}
+
+.badge-activo {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    color: #047857;
+    font-weight: 700;
+}
+
+.badge-inactivo {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    font-weight: 700;
+}
+
+.badge-rol-consulta {
+    background: #f0fdfa;
+    border: 1px solid #ccfbf1;
+    color: #0f766e;
+    font-size: 0.72rem;
+    font-weight: 600;
 }
 
 .badge-estado-cancelada,
@@ -618,24 +647,33 @@ input[type="search"],
 input[type="password"],
 input[type="email"],
 input[type="datetime-local"],
-select {
+select,
+textarea {
     width: 100%;
-    min-height: 42px;
-    padding: 8px 12px;
-    border: 1px solid #cbd5e1;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: 1.5px solid #cbd5e1;
     border-radius: var(--radius-md);
     background: #ffffff;
     font: inherit;
-    font-size: 0.92rem;
+    font-size: 0.93rem;
     color: var(--text-main);
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+input:hover,
+select:hover,
+textarea:hover {
+    border-color: #94a3b8;
 }
 
 input:focus,
-select:focus {
+select:focus,
+textarea:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    border-color: #1e40af;
+    box-shadow: 0 0 0 3.5px rgba(30, 64, 175, 0.16);
+    background-color: #ffffff;
 }
 
 .select-sm {
@@ -964,6 +1002,12 @@ select:focus {
     border: 1px solid var(--estado-finalizado-border);
 }
 
+.alert-info {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
 .alert-danger {
     background: var(--danger-soft);
     color: #991b1b;
@@ -989,7 +1033,128 @@ select:focus {
 }
 
 /* ==========================================================================
-   10. Responsividad (< 768px)
+   10. Módulo de Gestión de Psicólogos y Equipo Clínico
+   ========================================================================== */
+.psicologos-grid-layout {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 992px) {
+    .psicologos-grid-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.hero-stats-pills {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.stat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #ffffff;
+    border: 1px solid var(--border-color);
+    padding: 6px 14px;
+    border-radius: 999px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.stat-pill-valor {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.stat-pill-etiqueta {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.stat-pill-exito {
+    background: #ecfdf5;
+    border-color: #a7f3d0;
+}
+.stat-pill-exito .stat-pill-valor {
+    color: #047857;
+}
+
+.stat-pill-aviso {
+    background: #fffbeb;
+    border-color: #fde68a;
+}
+.stat-pill-aviso .stat-pill-valor {
+    color: #b45309;
+}
+
+.terapeuta-item-perfil {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.avatar-terapeuta {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(30, 64, 175, 0.25);
+    flex-shrink: 0;
+}
+
+.correo-terapeuta {
+    font-family: monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.especialidad-tag {
+    font-size: 0.85rem;
+    color: var(--text-main);
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.btn-outline-danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger-border);
+}
+.btn-outline-danger:hover {
+    background: var(--danger-soft);
+    border-color: var(--danger);
+}
+
+.btn-outline-success {
+    background: transparent;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+.btn-outline-success:hover {
+    background: #ecfdf5;
+    border-color: #047857;
+}
+
+/* ==========================================================================
+   11. Responsividad (< 768px)
    ========================================================================== */
 @media (max-width: 768px) {
     .navbar-interior {
@@ -1048,4 +1213,246 @@ select:focus {
     .paciente-metadatos {
         width: 100%;
     }
+}
+
+/* ==========================================================================
+   12. Módulo Editar Cita (editar.php)
+   ========================================================================== */
+
+/* Ficha de identidad de la cita (sólo lectura) */
+.editar-ficha-id {
+    background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+    border: 1px solid #bfdbfe;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.ficha-id-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.ficha-id-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ficha-id-etiqueta {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.ficha-id-valor {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+code.ficha-id-valor {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 0.8rem;
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 3px 8px;
+    border-radius: 6px;
+    letter-spacing: 0.03em;
+}
+
+/* Alerta cuando la cita ya está finalizada */
+.alert-finalizado {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.88rem;
+}
+
+/* Bloque de fecha/terapeuta actual */
+.editar-fecha-actual,
+.editar-psicologo-actual {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    padding: 6px 12px;
+    margin-bottom: 8px;
+    font-size: 0.84rem;
+    flex-wrap: wrap;
+}
+
+.editar-fecha-etiqueta {
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.editar-fecha-codigo {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+    font-size: 0.82rem;
+    color: var(--primary);
+    background: #eff6ff;
+    padding: 2px 7px;
+    border-radius: 4px;
+}
+
+.editar-psicologo-nombre {
+    color: var(--text-main);
+    font-weight: 700;
+}
+
+/* Historial de modificaciones */
+.editar-historial-panel {
+    background: #fafafa;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    margin-top: 1.25rem;
+}
+
+.editar-historial-titulo {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.editar-historial-lista {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.editar-historial-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+}
+
+.historial-cambio-campo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    font-size: 0.84rem;
+    margin-bottom: 4px;
+}
+
+.historial-campo-nombre {
+    font-weight: 700;
+    color: var(--text-main);
+    background: #f1f5f9;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.historial-valor-antes {
+    color: #b91c1c;
+    text-decoration: line-through;
+    font-size: 0.84rem;
+}
+
+.historial-valor-nuevo {
+    color: #047857;
+    font-weight: 700;
+    font-size: 0.84rem;
+}
+
+.historial-flecha {
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.historial-meta-info {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.editar-historial-vacio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    font-style: italic;
+    padding: 0.75rem 0;
+    margin-top: 1rem;
+    border-top: 1px dashed var(--border-color);
+}
+
+/* Botón outline clínico */
+.btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border: 1.5px solid var(--primary-border);
+    padding: 10px 18px;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.btn-outline:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary-hover);
+}
+
+@media (max-width: 768px) {
+    .ficha-id-grid {
+        gap: 1rem;
+    }
+    .editar-fecha-actual,
+    .editar-psicologo-actual {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .form-acciones .btn-outline {
+        margin-left: 0;
+        margin-top: 0.5rem;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ================================================
+   Module 13: Botón deshabilitado (cita finalizada)
+   ================================================ */
+.btn-disabled {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border: 1px solid #e2e8f0;
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.65;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
 }

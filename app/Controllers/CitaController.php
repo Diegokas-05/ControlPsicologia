@@ -14,7 +14,7 @@ final class CitaController {
             'estado' => ['Estado de Cita', ESTADOS_CITA]
         ];
 
-        // 1. Validar claves permitidas en GET (lanza InvalidArgumentException si envían algo extraño)
+        // 1. Validar claves permitidas en GET
         entrada_campos($_GET, ['q', 'tipo', 'estado']);
 
         // 2. Validar opciones de los filtros con Entrada.php
@@ -29,15 +29,35 @@ final class CitaController {
             }
         }
 
-        // 3. Validar búsqueda segura por texto (0 a 60 caracteres)
+        // 3. Control de acceso por rol: Si es psicólogo (rol consulta), restringir citas a su asignación
+        $usuario = usuario_actual();
+        if (($usuario['rol'] ?? '') === 'consulta') {
+            $nombrePsicologo = (string)($usuario['nombre'] ?? '');
+            $idPsicologo = (string)($usuario['id'] ?? '');
+
+            $filtroRol = [
+                '$or' => [
+                    ['psicologo' => $nombrePsicologo],
+                    ['psicologo' => $idPsicologo],
+                ]
+            ];
+
+            if ($filtro === []) {
+                $filtro = $filtroRol;
+            } else {
+                $filtro = ['$and' => [$filtro, $filtroRol]];
+            }
+        }
+
+        // 4. Validar búsqueda segura por texto (0 a 60 caracteres)
         $busqueda = entrada_texto($_GET, 'q', 0, 60);
 
-        // 4. Consulta al modelo (filtro ya sanitizado y controlado por el servidor)
+        // 5. Consulta al modelo (filtro ya sanitizado y controlado por el servidor)
         $items = $this->modelo->listar($filtro, $busqueda);
         $total = count($items);
         $titulo = 'Citas: Listado HTMX + MVC';
 
-        // 5. Detectar HTMX o vista completa
+        // 6. Detectar HTMX o vista completa
         $esHtmx = strtolower((string)($_SERVER['HTTP_HX_REQUEST'] ?? '')) === 'true';
 
         if ($esHtmx) {

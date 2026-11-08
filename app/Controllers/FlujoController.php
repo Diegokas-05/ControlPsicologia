@@ -18,7 +18,6 @@ final class FlujoController
 
     public function cambiar(): void
     {
-        // ¡SOLUCIÓN! Agregamos 'estado' a la lista de campos permitidos
         entrada_campos($_POST, ['id', 'accion', 'csrf', 'token_csrf', 'csrf_token', 'estado']);
         
         $id = entrada_id($_POST);
@@ -31,5 +30,13 @@ final class FlujoController
 
         header('HX-Trigger: flujoActualizado');
         echo '<p role="status">Cambio guardado correctamente.</p>';
+    }
+
+    public function comprobante(): void
+    {
+        entrada_campos($_GET, ['id']);
+        $id = entrada_id($_GET);
+        $item = $this->modelo->obtenerComprobante($id, $this->base);
+        require dirname(__DIR__) . '/Views/flujo/comprobante.php';
     }
 }
