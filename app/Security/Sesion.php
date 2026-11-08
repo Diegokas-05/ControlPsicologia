@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 const INACTIVIDAD_MAXIMA     = 1200;  // 20 min
-//const INACTIVIDAD_MAXIMA     = 30;  // para la prueba es 30 
+
 const DURACION_MAXIMA_SESION = 7200;  // 2 horas
 
 function solicitud_htmx(): bool {

@@ -1,10 +1,16 @@
 <?php
 declare(strict_types=1);
 
-require_once '../vendor/autoload.php';
-require_once '../app/models/Cita.php';
-require_once '../app/Security/Sesion.php';
-require_once '../app/Security/Csrf.php';
+$raiz = dirname(__DIR__);
+
+require_once $raiz . '/vendor/autoload.php';
+require_once $raiz . '/config/Database.php';
+require_once $raiz . '/app/models/Cita.php';
+require_once $raiz . '/app/Security/Sesion.php';
+require_once $raiz . '/app/Security/Csrf.php';
+require_once $raiz . '/app/Security/Entrada.php';
+require_once $raiz . '/app/Security/AuditoriaEntrada.php';
+require_once $raiz . '/funciones.php';
 
 iniciar_sesion_segura();
 exigir_rol('admin');
@@ -15,61 +21,86 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'GET') {
     exit('Método no permitido.');
 }
 
-$id = $_GET['id'] ?? '';
+// Configurar auditoría global
+$db = new Database();
+$baseDatos = $db->conectar();
+global $auditoria;
+$auditoria = $baseDatos->bitacora;
 
-if (empty($id)) {
-    die("<h3 style='color:red;'>Error: ID no proporcionado.</h3><a href='mvc.php'>Volver</a>");
-}
+try {
+    // entrada_id valida formato de 24 hex y retorna un ObjectId
+    $id = entrada_id($_GET);
 
-$citaModel  = new Cita();
-$citaActual = $citaModel->obtenerPorId($id);
+    $citaModel = new Cita();
+    $citaActual = $citaModel->obtenerPorId((string)$id);
 
-if (!$citaActual) {
-    die("<h3 style='color:red;'>Error: Registro no encontrado.</h3><a href='mvc.php'>Volver</a>");
+    if (!$citaActual) {
+        http_response_code(404);
+        exit('Registro no encontrado.');
+    }
+
+} catch (InvalidArgumentException $e) {
+    registrar_rechazo_entrada_guia07('editar');
+    http_response_code(422);
+    header('Content-Type: text/plain; charset=UTF-8');
+    exit('Identificador invalido.');
+} catch (Throwable $e) {
+    error_log('FALLO_EDITAR_GUIA07: ' . $e->getMessage());
+    http_response_code(500);
+    exit('Error interno del servidor.');
 }
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Editar Cita - ControlPsicologia</title>
     <link rel="stylesheet" href="assets/css/estilos.css">
 </head>
 <body>
-    <div class="container">
+    <?php require $raiz . '/app/Views/layouts/header.php'; ?>
+
+    <main class="container">
         <h1>Editar Cita</h1>
 
         <form action="actualizar.php" method="POST">
             <?= campo_csrf() ?>
-            <input type="hidden" name="id" value="<?= htmlspecialchars($id) ?>">
+            <input type="hidden" name="id" value="<?= e((string)$id) ?>">
 
             <div class="form-group">
                 <label for="motivo">Motivo de la consulta:</label>
                 <input type="text" id="motivo" name="motivo" required maxlength="100"
-                       value="<?= htmlspecialchars($citaActual['motivo']) ?>">
+                       value="<?= e($citaActual['motivo'] ?? '') ?>">
             </div>
 
             <div class="form-group">
                 <label for="tipo">Tipo de terapia:</label>
                 <select id="tipo" name="tipo">
-                    <option value="Individual" <?= $citaActual['tipo'] === 'Individual' ? 'selected' : '' ?>>Individual</option>
-                    <option value="Pareja"     <?= $citaActual['tipo'] === 'Pareja'     ? 'selected' : '' ?>>Pareja</option>
-                    <option value="Infantil"   <?= $citaActual['tipo'] === 'Infantil'   ? 'selected' : '' ?>>Infantil</option>
+                    <?php foreach (TIPOS_CITA as $tipo): ?>
+                        <option value="<?= e($tipo) ?>" <?= ($citaActual['tipo'] ?? '') === $tipo ? 'selected' : '' ?>>
+                            <?= e($tipo) ?>
+                        </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
             <div class="form-group">
                 <label for="estado">Estado de la cita:</label>
                 <select id="estado" name="estado">
-                    <option value="Pendiente"  <?= $citaActual['estado'] === 'Pendiente'  ? 'selected' : '' ?>>Pendiente</option>
-                    <option value="Completada" <?= $citaActual['estado'] === 'Completada' ? 'selected' : '' ?>>Completada</option>
-                    <option value="Cancelada"  <?= $citaActual['estado'] === 'Cancelada'  ? 'selected' : '' ?>>Cancelada</option>
+                    <?php foreach (ESTADOS_CITA as $estado): ?>
+                        <option value="<?= e($estado) ?>" <?= ($citaActual['estado'] ?? '') === $estado ? 'selected' : '' ?>>
+                            <?= e($estado) ?>
+                        </option>
+                    <?php endforeach; ?>
                 </select>
             </div>
 
-            <button type="submit">Actualizar Cita</button>
-            <a href="mvc.php" class="btn-link" style="display: block; margin-top: 10px; text-align: center;">Cancelar y Volver</a>
+            <div style="margin-top: 24px; display: flex; align-items: center; gap: 14px;">
+                <button type="submit" class="btn btn-primary">Actualizar Cita</button>
+                <a href="citas.php" class="btn-link">Cancelar y Volver</a>
+            </div>
         </form>
-    </div>
+    </main>
 </body>
 </html>

@@ -126,5 +126,7 @@ $citasArray = $citas->toArray();
             </div>
         <?php endif; ?>
     </div>
+
+    <script src="flujo-ui.js" defer></script>
 </body>
 </html>

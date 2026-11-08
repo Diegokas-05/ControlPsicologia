@@ -1,10 +1,15 @@
 <?php
 declare(strict_types=1);
 
-require_once '../vendor/autoload.php';
-require_once '../app/models/Cita.php';
-require_once '../app/Security/Sesion.php';
-require_once '../app/Security/Csrf.php';
+$raiz = dirname(__DIR__);
+
+require_once $raiz . '/vendor/autoload.php';
+require_once $raiz . '/config/Database.php';
+require_once $raiz . '/app/models/Cita.php';
+require_once $raiz . '/app/Security/Sesion.php';
+require_once $raiz . '/app/Security/Csrf.php';
+require_once $raiz . '/app/Security/Entrada.php';
+require_once $raiz . '/app/Security/AuditoriaEntrada.php';
 
 iniciar_sesion_segura();
 exigir_rol('admin');
@@ -15,50 +20,40 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     exit('Método no permitido.');
 }
 
-validar_csrf();
+// Configurar auditoría global
+$db = new Database();
+$baseDatos = $db->conectar();
+global $auditoria;
+$auditoria = $baseDatos->bitacora;
 
-$id     = trim($_POST['id'] ?? '');
-$motivo = trim($_POST['motivo'] ?? '');
-$tipo   = trim($_POST['tipo'] ?? '');
-$estado = trim($_POST['estado'] ?? '');
+try {
+    validar_csrf();
 
-function mostrarError(string $mensaje, string $id): void {
-    $idSeguro = htmlspecialchars($id, ENT_QUOTES, 'UTF-8');
-    $msgSeguro = htmlspecialchars($mensaje, ENT_QUOTES, 'UTF-8');
-    die("
-        <link rel='stylesheet' href='assets/css/estilos.css'>
-        <div class='container'>
-            <div class='alert alert-danger'>Fallo de validación: {$msgSeguro}</div>
-            <a href='editar.php?id={$idSeguro}' class='btn-link'>Volver al formulario</a>
-        </div>
-    ");
-}
+    // Valida que el ID recibido por POST sea un ObjectId válido
+    $id = entrada_id($_POST);
 
-if (empty($id) || empty($motivo) || strlen($motivo) > 100) {
-    mostrarError("El motivo es obligatorio y máximo de 100 caracteres.", $id);
-}
+    // Valida campos permitidos y opciones para edición
+    $datos = datos_cita_guia07($_POST, true);
 
-$tiposPermitidos = ['Individual', 'Pareja', 'Infantil'];
-if (!in_array($tipo, $tiposPermitidos, true)) {
-    mostrarError("Tipo de terapia no permitido.", $id);
-}
+    $citaModel = new Cita();
+    $resultado = $citaModel->actualizar((string)$id, $datos);
 
-$estadosPermitidos = ['Pendiente', 'Completada', 'Cancelada'];
-if (!in_array($estado, $estadosPermitidos, true)) {
-    mostrarError("Estado no permitido.", $id);
-}
+    if (!$resultado) {
+        http_response_code(404);
+        exit('Registro no encontrado.');
+    }
 
-$citaModel = new Cita();
-$datosFormulario = [
-    'motivo' => $motivo,
-    'tipo'   => $tipo,
-    'estado' => $estado,
-];
-
-if ($citaModel->actualizar($id, $datosFormulario)) {
     $_SESSION['mensaje_exito'] = "La cita fue actualizada exitosamente.";
     header('Location: mvc.php', true, 303);
     exit;
-}
 
-mostrarError("Error al actualizar en la base de datos.", $id);
+} catch (InvalidArgumentException $e) {
+    registrar_rechazo_entrada_guia07('editar');
+    http_response_code(422);
+    header('Content-Type: text/plain; charset=UTF-8');
+    exit('Datos invalidos. Revisa tipo, longitud y opciones.');
+} catch (Throwable $e) {
+    error_log('FALLO_ACTUALIZAR_GUIA07: ' . $e->getMessage());
+    http_response_code(500);
+    exit('Error interno del servidor.');
+}

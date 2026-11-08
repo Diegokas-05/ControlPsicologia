@@ -4,7 +4,7 @@ declare(strict_types=1);
 final class AuthController
 {
     private const MAX_INTENTOS    = 3;
-    private const MINUTOS_BLOQUEO = 15; # el tiempo que se desativa la cuenta para iniciar session
+    private const MINUTOS_BLOQUEO = 1; 
 
     private UsuarioModel  $usuarios;
     private BitacoraModel $bitacora;

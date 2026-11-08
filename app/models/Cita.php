@@ -1,95 +1,128 @@
 <?php
-// app/models/Cita.php
+declare(strict_types=1);
 
 require_once __DIR__ . '/../../config/Database.php';
 
 class Cita {
-    private $coleccion;
+    private MongoDB\Collection $coleccion;
 
-    public function __construct() { // Constructor de la clase Cita
-        
-        $db = new Database(); // Instanciamos la clase Database para establecer la conexión
-        $baseDatos = $db->conectar(); // Llamamos al método conectar() para obtener la conexión a la base de datos
-        $this->coleccion = $baseDatos->citas; // Accedemos a la colección 'citas'
+    public function __construct() {
+        $db = new Database();
+        $baseDatos = $db->conectar();
+        $this->coleccion = $baseDatos->citas;
     }
 
-
-    public function crear($datos) {
-
+    public function crear(array $datos): bool {
         try {
+            $documento = [
+                'motivo'          => $datos['motivo'],
+                'tipo'            => $datos['tipo'],
+                'estado'          => $datos['estado'] ?? 'Pendiente',
+                'fecha_creacion'  => new MongoDB\BSON\UTCDateTime(),
+                'estado_flujo'    => 'pendiente',
+                'historial_flujo' => [],
+                'actualizado_en'  => new MongoDB\BSON\UTCDateTime()
+            ];
 
-            $resultado = $this->coleccion->insertOne([
-                'motivo' => $datos['motivo'],
-                'tipo' => $datos['tipo'],
-                'estado' => $datos['estado'],
-                'fecha_creacion' => new MongoDB\BSON\UTCDateTime() // Guardamos la fecha de creación como un objeto UTCDateTime
-            ]);
+            if (!empty($datos['fecha_cita'])) {
+                $documento['fecha_cita'] = (string)$datos['fecha_cita'];
+            }
+            if (!empty($datos['psicologo'])) {
+                $documento['psicologo'] = (string)$datos['psicologo'];
+            }
+            if (!empty($datos['notas'])) {
+                $documento['notas'] = (string)$datos['notas'];
+            }
 
-            return $resultado->getInsertedCount(); // Retorna el número de documentos insertados (debería ser 1 si la inserción fue exitosa)
+            $resultado = $this->coleccion->insertOne($documento);
+            return $resultado->getInsertedCount() > 0;
         } catch (Exception $e) {
-            echo "hubo un error al guardar la cita.";
-            return false; // Retorna false si ocurre un error durante la inserción
+            error_log('Error al guardar cita: ' . $e->getMessage());
+            return false;
         }
     }
     
-    //metodo para consultar citas
-    public function consultar($filtroTipo = '', $filtroEstado = '') {
+    public function consultar(string $filtroTipo = '', string $filtroEstado = '') {
         $criterios = [];
-        
-        // Si el usuario seleccionó un filtro, lo agregamos a los criterios
         if (!empty($filtroTipo)) {
             $criterios['tipo'] = $filtroTipo;
         }
         if (!empty($filtroEstado)) {
             $criterios['estado'] = $filtroEstado;
         }
-        
-        // Ejecutamos la consulta find() requerida en la rúbrica
         return $this->coleccion->find($criterios);
-
     }
 
-    // Método para eliminar una cita (Requisito R04)
-    public function eliminar($id) {
+    public function eliminar(string $id): bool {
         try {
-            // MongoDB requiere que los IDs de texto se conviertan a su formato especial ObjectId
             $idMongo = new MongoDB\BSON\ObjectId($id);
             $resultado = $this->coleccion->deleteOne(['_id' => $idMongo]);
-            
             return $resultado->getDeletedCount() > 0;
-            
         } catch (Exception $e) {
             return false;
         }
-
     }
 
-    
-    // Método para obtener una cita específica por su ID
-    public function obtenerPorId($id) {
-        $idMongo = new MongoDB\BSON\ObjectId($id);
-        return $this->coleccion->findOne(['_id' => $idMongo]);
-    }
-
-    // Método para actualizar una cita (Requisito R03)
-    public function actualizar($id, $datos) {
+    public function obtenerPorId(string $id) {
         try {
             $idMongo = new MongoDB\BSON\ObjectId($id);
-            
-            // $set le indica a MongoDB que solo reemplace los campos especificados, conservando el _id
-            $resultado = $this->coleccion->updateOne(
-                ['_id' => $idMongo],
-                ['$set' => [
-                    'motivo' => $datos['motivo'],
-                    'tipo' => $datos['tipo'],
-                    'estado' => $datos['estado']
-                ]]
-            );
-            
-            // Retornamos true incluso si el usuario guarda sin hacer cambios
-            return true;
-            
+            return $this->coleccion->findOne(['_id' => $idMongo]);
         } catch (Exception $e) {
+            return null;
+        }
+    }
+
+    public function actualizar(string $id, array $datos): bool {
+        try {
+            $idMongo = new MongoDB\BSON\ObjectId($id);
+            $set = [
+                'motivo'         => $datos['motivo'],
+                'tipo'           => $datos['tipo'],
+                'estado'         => $datos['estado'],
+                'actualizado_en' => new MongoDB\BSON\UTCDateTime()
+            ];
+
+            if (isset($datos['fecha_cita'])) {
+                $set['fecha_cita'] = (string)$datos['fecha_cita'];
+            }
+            if (isset($datos['psicologo'])) {
+                $set['psicologo'] = (string)$datos['psicologo'];
+            }
+            if (isset($datos['notas'])) {
+                $set['notas'] = (string)$datos['notas'];
+            }
+
+            $this->coleccion->updateOne(
+                ['_id' => $idMongo],
+                ['$set' => $set]
+            );
+            return true;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
+    public function guardarNotasExpediente(string $id, array $notas): bool {
+        try {
+            $idMongo = new MongoDB\BSON\ObjectId($id);
+            $fecha = new MongoDB\BSON\UTCDateTime();
+
+            $this->coleccion->updateOne(
+                ['_id' => $idMongo],
+                [
+                    '$set' => [
+                        'expediente.observaciones'    => $notas['observaciones'] ?? '',
+                        'expediente.sintomas'         => $notas['sintomas'] ?? '',
+                        'expediente.plan_tratamiento' => $notas['plan_tratamiento'] ?? '',
+                        'expediente.psicologo'        => $notas['psicologo'] ?? '',
+                        'expediente.actualizado_en'   => $fecha,
+                        'actualizado_en'              => $fecha,
+                    ]
+                ]
+            );
+            return true;
+        } catch (Exception $e) {
+            error_log('Error al guardar notas de expediente: ' . $e->getMessage());
             return false;
         }
     }

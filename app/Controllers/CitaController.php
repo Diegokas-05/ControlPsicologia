@@ -10,42 +10,34 @@ final class CitaController {
 
     public function index(): void {
         $campos = [
-            'tipo' => ['Tipo de Terapia', ['Individual', 'Pareja', 'Infantil']],
-            'estado' => ['Estado de Cita', ['Pendiente', 'Completada', 'Cancelada']]
+            'tipo'   => ['Tipo de Terapia', TIPOS_CITA],
+            'estado' => ['Estado de Cita', ESTADOS_CITA]
         ];
 
+        // 1. Validar claves permitidas en GET (lanza InvalidArgumentException si envían algo extraño)
+        entrada_campos($_GET, ['q', 'tipo', 'estado']);
+
+        // 2. Validar opciones de los filtros con Entrada.php
         $filtro = [];
         $seleccion = [];
 
         foreach ($campos as $campo => [$etiqueta, $opciones]) {
-            $valor = $_GET[$campo] ?? '';
-            if (!is_string($valor) || ($valor !== '' && !in_array($valor, $opciones, true))) {
-                http_response_code(400);
-                exit('Filtro inválido.');
-            }
+            $valor = entrada_opcion($_GET, $campo, $opciones, true);
             $seleccion[$campo] = $valor;
             if ($valor !== '') {
                 $filtro[$campo] = $valor;
             }
         }
 
-        // Nueva validación estricta para la búsqueda por texto
-        $busqueda = $_GET['q'] ?? '';
-        if (!is_string($busqueda)) {
-            http_response_code(400);
-            exit('La búsqueda debe ser texto.');
-        }
-        $busqueda = trim($busqueda);
-        if (mb_strlen($busqueda) > 60) {
-            http_response_code(400);
-            exit('La búsqueda supera 60 caracteres.');
-        }
+        // 3. Validar búsqueda segura por texto (0 a 60 caracteres)
+        $busqueda = entrada_texto($_GET, 'q', 0, 60);
 
+        // 4. Consulta al modelo (filtro ya sanitizado y controlado por el servidor)
         $items = $this->modelo->listar($filtro, $busqueda);
         $total = count($items);
         $titulo = 'Citas: Listado HTMX + MVC';
 
-        // Detectar si es una petición de HTMX para enviar solo el pedazo de código
+        // 5. Detectar HTMX o vista completa
         $esHtmx = strtolower((string)($_SERVER['HTTP_HX_REQUEST'] ?? '')) === 'true';
 
         if ($esHtmx) {
